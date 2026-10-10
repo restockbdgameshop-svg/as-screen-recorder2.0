@@ -1,0 +1,66 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Select area</title>
+<style>
+  *{box-sizing:border-box;margin:0}
+  html,body{width:100%;height:100%;overflow:hidden;background:rgba(5,10,25,.45);cursor:crosshair;user-select:none;font-family:"Segoe UI",system-ui,sans-serif}
+  #hint{position:fixed;top:24px;left:50%;transform:translateX(-50%);background:#0b1226;color:#e8eefc;border:1px solid #1f6fe0;border-radius:10px;padding:10px 18px;font-size:14px;z-index:5}
+  #hint b{color:#2ee6ff}
+  #box{position:absolute;display:none;border:2px solid #2ee6ff;box-shadow:0 0 0 9999px rgba(5,10,25,.55);cursor:move}
+  .h{position:absolute;width:14px;height:14px;background:#2ee6ff;border:2px solid #0b1226;border-radius:50%}
+  #size{position:absolute;left:0;top:-26px;background:#0b1226;color:#2ee6ff;font-size:12px;padding:3px 8px;border-radius:6px;white-space:nowrap}
+  #actions{position:absolute;display:none;gap:8px;z-index:6}
+  #actions button{border:0;border-radius:9px;padding:9px 18px;font:600 13px "Segoe UI";cursor:pointer;color:#fff}
+  #ok{background:linear-gradient(135deg,#1f6fe0,#19b8e6)}#cancel{background:#33405f}
+</style></head>
+<body>
+<div id="hint">Drag to select the area to record. Then move or resize it · <b>Enter</b> to confirm · <b>Esc</b> to cancel</div>
+<div id="box"><div id="size"></div></div>
+<div id="actions"><button id="ok">Use this area</button><button id="cancel">Cancel</button></div>
+<script>
+  const $ = id => document.getElementById(id);
+  const box = $('box'), actions = $('actions'), MIN = 64;
+  let r = null, drag = null;
+  const HANDLES = { nw: [0, 0], n: [.5, 0], ne: [1, 0], e: [1, .5], se: [1, 1], s: [.5, 1], sw: [0, 1], w: [0, .5] };
+  const CUR = { nw: 'nwse', se: 'nwse', ne: 'nesw', sw: 'nesw', n: 'ns', s: 'ns', e: 'ew', w: 'ew' };
+  for (const k in HANDLES) { const h = document.createElement('div'); h.className = 'h'; h.dataset.h = k; h.style.cursor = CUR[k] + '-resize'; h.style.left = `calc(${HANDLES[k][0] * 100}% - 8px)`; h.style.top = `calc(${HANDLES[k][1] * 100}% - 8px)`; box.appendChild(h); }
+  const W = () => window.innerWidth, H = () => window.innerHeight;
+  const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
+  function render() {
+    if (!r) return; box.style.display = 'block';
+    Object.assign(box.style, { left: r.x + 'px', top: r.y + 'px', width: r.w + 'px', height: r.h + 'px' });
+    $('size').textContent = `${r.w} × ${r.h}`;
+    actions.style.display = 'flex';
+    const ay = r.y + r.h + 12 + 44 > H() ? Math.max(8, r.y - 56) : r.y + r.h + 12;
+    actions.style.left = clamp(r.x + r.w - 230, 8, W() - 240) + 'px'; actions.style.top = ay + 'px';
+  }
+  try { const q = new URLSearchParams(location.search).get('rect'); if (q) { const e = JSON.parse(q); r = { x: e.x, y: e.y, w: e.width, h: e.height }; render(); $('hint').style.opacity = .85; } } catch {}
+  window.addEventListener('mousedown', e => {
+    if (e.target.closest('#actions')) return;
+    const h = e.target.dataset && e.target.dataset.h;
+    if (h) drag = { type: 'resize', h, sx: e.clientX, sy: e.clientY, o: { ...r } };
+    else if (r && e.target === box || (r && e.target.id === 'size')) drag = { type: 'move', sx: e.clientX, sy: e.clientY, o: { ...r } };
+    else { drag = { type: 'new', sx: e.clientX, sy: e.clientY }; r = { x: e.clientX, y: e.clientY, w: 0, h: 0 }; }
+  });
+  window.addEventListener('mousemove', e => {
+    if (!drag) return;
+    const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
+    if (drag.type === 'new') { r = { x: Math.min(drag.sx, e.clientX), y: Math.min(drag.sy, e.clientY), w: Math.abs(dx), h: Math.abs(dy) }; }
+    else if (drag.type === 'move') { r.x = clamp(drag.o.x + dx, 0, W() - drag.o.w); r.y = clamp(drag.o.y + dy, 0, H() - drag.o.h); }
+    else {
+      let { x, y, w, h } = drag.o; const k = drag.h;
+      if (k.includes('e')) w = clamp(drag.o.w + dx, MIN, W() - x);
+      if (k.includes('s')) h = clamp(drag.o.h + dy, MIN, H() - y);
+      if (k.includes('w')) { const nx = clamp(x + dx, 0, x + w - MIN); w = x + w - nx; x = nx; }
+      if (k.includes('n')) { const ny = clamp(y + dy, 0, y + h - MIN); h = y + h - ny; y = ny; }
+      r = { x, y, w, h };
+    }
+    render();
+  });
+  window.addEventListener('mouseup', () => {
+    if (drag && drag.type === 'new' && r && (r.w < MIN || r.h < MIN)) { r = null; box.style.display = 'none'; actions.style.display = 'none'; }
+    drag = null;
+  });
+  const confirm = () => { if (r && r.w >= MIN && r.h >= MIN) window.asr.send('area:result', { x: Math.round(r.x), y: Math.round(r.y), width: Math.round(r.w), height: Math.round(r.h) }); };
+  $('ok').onclick = confirm; $('cancel').onclick = () => window.asr.send('area:result', null);
+  window.addEventListener('keydown', e => { if (e.key === 'Enter') confirm(); if (e.key === 'Escape') window.asr.send('area:result', null); });
+</script></body></html>

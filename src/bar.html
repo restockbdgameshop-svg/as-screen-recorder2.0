@@ -1,0 +1,43 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Recording</title>
+<style>
+  *{box-sizing:border-box;margin:0}
+  body{font-family:"Segoe UI",system-ui,sans-serif;background:linear-gradient(135deg,#0b1226,#111a38);color:#e8eefc;height:100vh;overflow:hidden;user-select:none;border:1px solid #1f6fe0;border-radius:12px}
+  .row{display:flex;align-items:center;height:100%;padding:0 12px;gap:10px;-webkit-app-region:drag}
+  .dot{width:12px;height:12px;border-radius:50%;background:#ff3b5c;box-shadow:0 0 10px #ff3b5c;animation:pulse 1.2s infinite}
+  .paused .dot{background:#ffb020;box-shadow:none;animation:none}
+  @keyframes pulse{50%{opacity:.35}}
+  .status{font-size:11px;letter-spacing:.08em;font-weight:700;color:#ff6b86;min-width:48px}
+  .paused .status{color:#ffb020}
+  .time{font-variant-numeric:tabular-nums;font-size:20px;font-weight:600;min-width:84px}
+  .src{font-size:10px;color:#8ea2cf;line-height:1.3;flex:1;min-width:0}
+  .src b{color:#2ee6ff;font-weight:600}
+  button{-webkit-app-region:no-drag;border:0;border-radius:9px;padding:8px 12px;font:600 12px "Segoe UI";cursor:pointer;color:#fff;transition:.15s}
+  #pause{background:#24407a}#pause:hover{background:#2d56a8}
+  #stop{background:#e0344f}#stop:hover{background:#ff4965}
+  .warn{position:absolute;left:0;right:0;bottom:0;background:#ffb020;color:#2a1b00;font-size:11px;padding:3px 10px;display:none}
+</style></head>
+<body>
+<div class="row" id="row">
+  <div class="dot"></div><div class="status" id="status">REC</div>
+  <div class="time" id="time">00:00:00</div>
+  <div class="src" id="src"></div>
+  <button id="pause">Pause</button><button id="stop">Stop</button>
+</div>
+<div class="warn" id="warn"></div>
+<script>
+  const $ = id => document.getElementById(id);
+  let paused = false;
+  const fmt = ms => { const s = Math.floor(ms / 1000), p = n => String(n).padStart(2, '0'); return `${p(Math.floor(s / 3600))}:${p(Math.floor(s % 3600 / 60))}:${p(s % 60)}`; };
+  window.asr.on('bar:tick', d => {
+    paused = d.paused; $('time').textContent = fmt(d.elapsed);
+    $('row').className = 'row' + (paused ? ' paused' : '');
+    $('status').textContent = paused ? 'PAUSED' : 'REC';
+    $('pause').textContent = paused ? 'Resume' : 'Pause';
+    const on = [d.mic && 'Mic', d.system && 'System audio', d.webcam && 'Webcam'].filter(Boolean);
+    $('src').innerHTML = on.length ? 'On: <b>' + on.join(' · ') + '</b>' : 'Screen only (no audio)';
+  });
+  window.asr.on('bar:warn', m => { $('warn').textContent = m; $('warn').style.display = 'block'; });
+  $('pause').onclick = () => window.asr.send(paused ? 'bar:resume' : 'bar:pause');
+  $('stop').onclick = () => window.asr.send('bar:stop');
+</script></body></html>

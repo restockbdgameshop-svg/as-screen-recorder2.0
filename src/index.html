@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>AS Screen Recorder</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:">
+<link rel="stylesheet" href="styles.css"></head>
+<body>
+<header>
+  <img src="../assets/logo.svg" class="logo" alt="AS Technology logo">
+  <div class="brand"><h1>AS Screen Recorder</h1><span>Free · Unlimited · No watermark</span></div>
+  <div class="spacer"></div>
+  <div class="chips" id="chips"></div>
+</header>
+
+<main id="setup">
+  <section class="card">
+    <h2>1 · What to record</h2>
+    <div class="seg" id="modeSeg">
+      <button data-mode="full" class="on">🖥️ Full screen</button>
+      <button data-mode="area">⬚ Custom area</button>
+    </div>
+    <label>Display<select id="displayId"></select></label>
+    <div id="areaRow" class="hidden">
+      <button class="ghost" id="pickArea">Select / adjust area…</button>
+      <span id="areaInfo" class="muted">No area selected yet</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>2 · Webcam</h2>
+    <label class="toggle"><input type="checkbox" id="webcam"><span></span>Show my webcam on the video</label>
+    <div id="camOpts" class="hidden">
+      <label>Camera<select id="camId"></select></label>
+      <div class="two">
+        <label>Corner<select id="camCorner"><option value="bottom-right">Bottom right</option><option value="bottom-left">Bottom left</option><option value="top-right">Top right</option><option value="top-left">Top left</option></select></label>
+        <label>Size<select id="camSize"><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select></label>
+      </div>
+      <video id="camPreview" autoplay muted playsinline></video>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>3 · Audio</h2>
+    <label class="toggle"><input type="checkbox" id="mic"><span></span>Microphone</label>
+    <div id="micOpts" class="hidden">
+      <label>Microphone device<select id="micId"></select></label>
+      <div class="meter"><div id="meterFill"></div></div>
+    </div>
+    <label class="toggle"><input type="checkbox" id="system"><span></span>Computer sound (apps, videos, meetings)</label>
+  </section>
+
+  <section class="card">
+    <h2>4 · Quality &amp; saving</h2>
+    <div class="two">
+      <label>Resolution<select id="resolution"><option value="720p">720p</option><option value="1080p">1080p</option><option value="native">Original size</option></select></label>
+      <label>Frame rate<select id="fps"><option value="30">30 FPS</option><option value="60">60 FPS</option></select></label>
+    </div>
+    <label>Quality<select id="quality"><option value="small">Smaller file</option><option value="balanced">Balanced</option><option value="high">Best quality</option></select></label>
+    <label>Save folder
+      <div class="pathrow"><input id="folder" readonly><button class="ghost" id="browse">Browse…</button></div>
+    </label>
+    <label>File name <input id="fileName" spellcheck="false"><small class="muted">{date} is replaced with the date and time.</small></label>
+  </section>
+</main>
+
+<section id="result" class="card hidden">
+  <h2 id="resTitle">Finishing your video…</h2>
+  <div class="progress"><div id="progFill"></div></div>
+  <p id="resText" class="muted"></p>
+  <div id="resActions" class="hidden">
+    <button class="primary small" id="openVideo">▶ Play video</button>
+    <button class="ghost" id="openFolder">Show in folder</button>
+    <button class="ghost" id="saveCopy">Save a copy as…</button>
+    <button class="ghost" id="again">New recording</button>
+  </div>
+</section>
+
+<div id="errorBar" class="hidden"></div>
+<footer>
+  <button class="primary" id="start">● Start recording</button>
+  <span class="made">Made by AS Technology</span>
+</footer>
+<script src="renderer.js"></script>
+</body></html>

@@ -1,0 +1,49 @@
+{
+  "name": "as-screen-recorder",
+  "productName": "AS Screen Recorder",
+  "version": "1.0.0",
+  "description": "AS Screen Recorder - free, unlimited, watermark-free screen recording for Windows. Made by AS Technology.",
+  "author": "AS Technology",
+  "license": "UNLICENSED",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis --x64"
+  },
+  "dependencies": {
+    "ffmpeg-static": "^5.2.0"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.astechnology.screenrecorder",
+    "productName": "AS Screen Recorder",
+    "copyright": "Copyright (c) AS Technology",
+    "directories": { "output": "dist", "buildResources": "assets" },
+    "files": ["main.js", "preload.js", "src/**/*", "assets/**/*", "package.json"],
+    "asarUnpack": ["node_modules/ffmpeg-static/**"],
+    "electronLanguages": ["en-US"],
+    "compression": "maximum",
+    "win": {
+      "icon": "assets/icon.ico",
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "artifactName": "AS-Screen-Recorder-Setup.exe"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "shortcutName": "AS Screen Recorder",
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "installerHeaderIcon": "assets/icon.ico",
+      "uninstallDisplayName": "AS Screen Recorder",
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false
+    }
+  }
+}
